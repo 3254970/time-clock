@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// כל הגישה העסקית למערכת עוברת דרך ה-Backend (Node.js + Firebase Admin SDK),
+// שאינו כפוף ל-Security Rules. ה-Frontend (Client SDK) אינו אמור לגעת ב-Firestore
+// כלל - הוא רק משתמש ב-Firebase Authentication ואז קורא ל-API של השרת.
+// לכן חוסמים כאן כל גישה ישירה מצד לקוח, כולל קריאה, כדי למנוע חשיפת מידע
+// עסקי (נוכחות, שכר-עבודה, פרטי עובדים) גם אם מישהו ינסה להשתמש ב-Client SDK ישירות.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
