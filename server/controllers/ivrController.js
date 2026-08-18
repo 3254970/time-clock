@@ -10,14 +10,19 @@ import { formatTimeHM, diffMinutes, minutesToHHMM } from '../utils/timeUtils.js'
  *
  * כל פעולת כניסה/יציאה עוברת דרך attendanceService המרכזי בדיוק כמו באתר -
  * אין כאן לוגיקה עסקית כפולה.
+ *
+ * חשוב: מנוע ה-TTS של ימות המשיח לא מקבל נקודות/פסיקים בטקסט (נבדק מול
+ * לוג שגיאה אמיתי מהמערכת). לכן כל משפט הוא איבר נפרד במערך ההודעות, בלי
+ * סימני פיסוק - הפסקות בין משפטים מתקבלות מריבוי ההודעות ולא מפיסוק.
  */
 
 function msg(text) {
   return { type: 'text', data: text };
 }
 
-async function playAndHangup(call, text) {
-  await call.id_list_message([msg(text)]);
+/** משמיע רצף משפטים (כל אחד ללא פיסוק) ומנתק. */
+async function playAndHangup(call, ...sentences) {
+  await call.id_list_message(sentences.map(msg));
 }
 
 /** מזהה את העובד המתקשר: קודם לפי מספר הטלפון, ואם לא נמצא - הזדהות ידנית. */
@@ -27,10 +32,7 @@ async function identifyCaller(call) {
   if (employee) return employee;
 
   const choice = await call.read(
-    [
-      msg('מספר הטלפון שממנו חייגתם אינו משויך לעובד.'),
-      msg('להזדהות באמצעות מספר עובד הקישו 1.'),
-    ],
+    [msg('מספר הטלפון שממנו התקשרתם אינו משויך לעובד'), msg('להזדהות באמצעות מספר עובד הקישו 1')],
     'tap',
     { max_digits: 1, digits_allowed: [1], allow_empty: true, sec_wait: 7 }
   );
@@ -60,17 +62,17 @@ async function handleClockIn(call, employee) {
     source: 'PHONE',
     createdBy: employee.id,
   });
-  await playAndHangup(call, `נרשמה כניסה לעבודה בשעה ${formatTimeHM(session.clockIn)}. תודה ולהתראות.`);
+  await playAndHangup(call, `נרשמה כניסה לעבודה בשעה ${formatTimeHM(session.clockIn)}`, 'תודה ולהתראות');
 }
 
 async function handleClockOut(call, employee) {
   const departments = await ivrService.getActiveDepartmentsForMenu();
   if (departments.length === 0) {
-    await playAndHangup(call, 'לא נמצאו מחלקות פעילות במערכת. יש לפנות למנהל.');
+    await playAndHangup(call, 'לא נמצאו מחלקות פעילות במערכת', 'יש לפנות למנהל');
     return;
   }
 
-  const menuMessages = [msg('באיזו מחלקה עבדתם?')];
+  const menuMessages = [msg('באיזו מחלקה עבדתם')];
   departments.forEach((dep, index) => {
     menuMessages.push(msg(`ל${dep.name} הקישו ${index + 1}`));
   });
@@ -84,7 +86,7 @@ async function handleClockOut(call, employee) {
 
   const chosenDepartment = departments[Number(choice) - 1];
   if (!chosenDepartment) {
-    await playAndHangup(call, 'לא זוהתה בחירה תקינה. להתראות.');
+    await playAndHangup(call, 'לא זוהתה בחירה תקינה', 'להתראות');
     return;
   }
 
@@ -95,7 +97,7 @@ async function handleClockOut(call, employee) {
   );
 
   if (confirm !== '1') {
-    await playAndHangup(call, 'הפעולה בוטלה. להתראות.');
+    await playAndHangup(call, 'הפעולה בוטלה', 'להתראות');
     return;
   }
 
@@ -109,7 +111,9 @@ async function handleClockOut(call, employee) {
   const totalMinutes = diffMinutes(session.clockIn, session.clockOut);
   await playAndHangup(
     call,
-    `נרשמה יציאה מהעבודה. סה"כ עבדת היום ${minutesToHHMM(totalMinutes)} שעות. תודה ולהתראות.`
+    'נרשמה יציאה מהעבודה',
+    `סך הכל עבדת היום ${minutesToHHMM(totalMinutes)} שעות`,
+    'תודה ולהתראות'
   );
 }
 
@@ -118,16 +122,18 @@ async function handleStatusInfo(call, employee) {
   if (status.status === 'IN') {
     await playAndHangup(
       call,
-      `אתה נמצא כרגע בעבודה. נכנסת בשעה ${status.clockInTime}. עבדת עד כה ${status.workedSoFar}.`
+      'אתה נמצא כרגע בעבודה',
+      `נכנסת בשעה ${status.clockInTime}`,
+      `עבדת עד כה ${status.workedSoFar}`
     );
   } else {
-    await playAndHangup(call, 'אינך רשום כנוכח בעבודה כרגע.');
+    await playAndHangup(call, 'אינך רשום כנוכח בעבודה כרגע');
   }
 }
 
 async function handlePeriodTotal(call, employee) {
   const totalFormatted = await ivrService.getCurrentPeriodTotalFormatted(employee.id);
-  await playAndHangup(call, `סה"כ שעות העבודה שלך בתקופה הנוכחית: ${totalFormatted}.`);
+  await playAndHangup(call, `סך הכל שעות העבודה שלך בתקופה הנוכחית ${totalFormatted}`);
 }
 
 /** נקודת הכניסה הראשית לשיחה - מחוברת ל-router ב-ivrRoutes.js */
@@ -136,28 +142,28 @@ export async function handleIncomingCall(call) {
     const employee = await identifyCaller(call);
 
     if (!employee) {
-      await playAndHangup(call, 'לא ניתן היה לזהות אותך במערכת. להתראות.');
+      await playAndHangup(call, 'לא ניתן היה לזהות אותך במערכת', 'להתראות');
       return;
     }
 
     if (employee.status !== 'ACTIVE') {
-      await playAndHangup(call, 'חשבונך אינו פעיל במערכת. יש לפנות למנהל.');
+      await playAndHangup(call, 'חשבונך אינו פעיל במערכת', 'יש לפנות למנהל');
       return;
     }
 
     const status = await attendanceService.getEmployeeStatus(employee.id);
     const isIn = status.status === 'IN';
 
-    const greeting = isIn
-      ? `שלום ${employee.fullName}. התחלת לעבוד בשעה ${status.clockInTime}. ליציאה מהעבודה הקישו 1.`
-      : `שלום ${employee.fullName}. לכניסה לעבודה הקישו 1.`;
+    const greetingMessages = isIn
+      ? [msg(`שלום ${employee.fullName}`), msg(`התחלת לעבוד בשעה ${status.clockInTime}`), msg('ליציאה מהעבודה הקישו 1')]
+      : [msg(`שלום ${employee.fullName}`), msg('לכניסה לעבודה הקישו 1')];
 
     const choice = await call.read(
       [
-        msg(greeting),
-        msg('לדיווח או תיקון שעות הקישו 2.'),
-        msg('לשמיעת מצב נוכחות הקישו 3.'),
-        msg('לשמיעת סה"כ שעות בתקופה הקישו 4.'),
+        ...greetingMessages,
+        msg('לדיווח או תיקון שעות הקישו 2'),
+        msg('לשמיעת מצב נוכחות הקישו 3'),
+        msg('לשמיעת סך הכל שעות בתקופה הקישו 4'),
       ],
       'tap',
       { max_digits: 1, digits_allowed: [1, 2, 3, 4], sec_wait: 10 }
@@ -169,7 +175,7 @@ export async function handleIncomingCall(call) {
         else await handleClockIn(call, employee);
         break;
       case '2':
-        await playAndHangup(call, 'לתיקון דיווחי נוכחות יש להיכנס לאתר האינטרנט של המערכת. להתראות.');
+        await playAndHangup(call, 'לתיקון דיווחי נוכחות יש להיכנס לאתר האינטרנט של המערכת', 'להתראות');
         break;
       case '3':
         await handleStatusInfo(call, employee);
@@ -178,12 +184,12 @@ export async function handleIncomingCall(call) {
         await handlePeriodTotal(call, employee);
         break;
       default:
-        await playAndHangup(call, 'לא זוהתה בחירה תקינה. להתראות.');
+        await playAndHangup(call, 'לא זוהתה בחירה תקינה', 'להתראות');
     }
   } catch (err) {
     console.error('[ivrController] שגיאה בשיחת IVR:', err.message);
     try {
-      await call.id_list_message([msg('אירעה שגיאה. נא לנסות שוב מאוחר יותר.')]);
+      await call.id_list_message([msg('אירעה שגיאה'), msg('נא לנסות שוב מאוחר יותר')]);
     } catch {
       // השיחה כבר נותקה - אין מה לעשות
     }
