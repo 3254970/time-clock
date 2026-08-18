@@ -119,16 +119,16 @@ Admin (Web)     ─┼─▶  Node.js + Express API  ─▶  Firestore
 Account שהורדתם בשלב 4:
 
 ```
-PORT=3000
-FIREBASE_PROJECT_ID=...
-FIREBASE_CLIENT_EMAIL=...
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+SA_PROJECT_ID=...
+SA_CLIENT_EMAIL=...
+SA_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 FRONTEND_URL=http://localhost:5173
 TIMEZONE=Asia/Jerusalem
 ```
 
-חשוב: את `FIREBASE_PRIVATE_KEY` יש להעתיק בדיוק כפי שהוא מופיע בקובץ ה-JSON
-(כולל `\n`), בתוך מרכאות.
+חשוב: את `SA_PRIVATE_KEY` יש להעתיק בדיוק כפי שהוא מופיע בקובץ ה-JSON (כולל
+`\n`), בתוך מרכאות. השמות הם `SA_*` ולא `FIREBASE_*` בכוונה - הקידומת
+`FIREBASE_` שמורה למערכת כש-השרת רץ כ-Firebase Function (ראו "פריסה" למטה).
 
 **לעולם אל תעלו את קובץ ה-`.env` או את ה-Service Account ל-git.** שני
 הקבצים כלולים ב-`.gitignore`.
@@ -271,10 +271,54 @@ FIRESTORE_EMULATOR_HOST=localhost:8080 npm test
 מסומנות `MISSING_CLOCK_OUT` - **בלי להמציא שעת יציאה**. העובד יכול לבצע
 כניסה חדשה למחרת, ולערוך את הרשומה החסרה בעצמו (או שהמנהל יערוך אותה).
 
-הג'וב רץ בתוך תהליך ה-Node של השרת (`node-cron`). אם המערכת נפרסת בסביבה
-שבה השרת לא רץ ברציפות (למשל Cloud Run שמצטמצם ל-0 מופעים), מומלץ להחליף
-להפעלה חיצונית קבועה (Google Cloud Scheduler שקורא לנתיב מוגן שמפעיל את
-`runDailyAttendanceJob()`).
+בהרצה מקומית (`node server.js`) הג'וב רץ בתוך תהליך ה-Node עצמו, דרך
+`node-cron`. **בפריסה בפועל (ראו "פריסה" למטה) השרת רץ כ-Firebase Function
+סרברלס, כך שאין תהליך רציף שיכול להריץ node-cron** - שם `runDailyAttendanceJob()`
+מופעל במקום זאת ע"י פונקציה מתוזמנת נפרדת (`dailyJob` ב-`server/functionsIndex.js`)
+שמופעלת ע"י Cloud Scheduler כל חצות. שתי הדרכים קוראות לאותה פונקציה בדיוק -
+אין לוגיקה כפולה.
+
+---
+
+## פריסה לענן (Production)
+
+המערכת פרוסה כרגע ב-Firebase:
+
+- **אתר**: `https://<project-id>.web.app` (Firebase Hosting, מ-`client/dist`)
+- **שרת**: `https://<region>-<project-id>.cloudfunctions.net/api`
+  (Firebase Cloud Function, Gen 1 - **לא** Cloud Run)
+
+הדפדפן תמיד פונה לדומיין של האתר בלבד. בקשות ל-`/api/**` מנותבות פנימית
+לפונקציה דרך `rewrites` ב-`firebase.json` - כך שאין CORS להגדיר ואין שני
+דומיינים לנהל.
+
+### למה Cloud Function ולא Cloud Run
+
+ל-V1 הזה תוכנן במקור לרוץ על Cloud Run (`server/Dockerfile` עדיין קיים
+לשימוש עתידי/סביבות אחרות). בפועל, ברשתות עם סינון תוכן מסוג NetFree,
+הדומיינים `run.googleapis.com` ו-`cloudresourcemanager.googleapis.com`
+עלולים להיות חסומים, בעוד ש-`cloudfunctions.googleapis.com` פתוח - ולכן
+`server/functionsIndex.js` מייצא את אותו `server/app.js` כ-Firebase
+Function (Gen 1) במקום זאת. אם הרשת שלכם לא חסומה, `gcloud run deploy
+--source ./server` עם ה-Dockerfile הקיים יעבוד באותה מידה.
+
+### פריסה מחדש
+
+```bash
+# בונים את הקליינט לפני כל פריסה - firebase.json מצביע ל-client/dist
+cd client && npm run build && cd ..
+
+npm install -g firebase-tools   # פעם ראשונה בלבד
+firebase login                  # פעם ראשונה בלבד
+
+firebase deploy --only functions,hosting,firestore:rules,firestore:indexes
+```
+
+### משתני סביבה בפונקציה
+
+`firebase deploy --only functions` קורא אוטומטית את `server/.env` (השמות
+`SA_*`, לא `FIREBASE_*` - ראו שלב 6 למעלה) והופך אותם לתצורת הסביבה של
+הפונקציה בענן. אין צורך להעתיק אותם ידנית ל-Console.
 
 ---
 
