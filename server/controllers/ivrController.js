@@ -138,6 +138,12 @@ async function handlePeriodTotal(call, employee) {
 
 /** נקודת הכניסה הראשית לשיחה - מחוברת ל-router ב-ivrRoutes.js */
 export async function handleIncomingCall(call) {
+  // ימות המשיח שולח בקשה נפרדת עם hangup=yes כשהמשתמש מנתק (לאותו URL כברירת
+  // מחדל). בשלב הזה השיחה כבר לא פעילה - אין לנסות להשמיע/לקרוא ממנה דבר.
+  if (call.values?.hangup === 'yes') {
+    return;
+  }
+
   try {
     const employee = await identifyCaller(call);
 
