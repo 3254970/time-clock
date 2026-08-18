@@ -1,23 +1,28 @@
 import admin from 'firebase-admin';
 
-// אתחול Firebase Admin SDK. אם חסרים Credentials בסביבת הפיתוח,
-// השרת עדיין עולה (כדי לאפשר בדיקת מבנה), אך קריאות ל-Firestore/Auth ייכשלו
-// עד שיוגדרו משתני הסביבה כראוי (ראה server/.env.example).
-const projectId = process.env.FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+// אתחול Firebase Admin SDK.
+// שמות המשתנים הם SA_* ולא FIREBASE_* בכוונה: כש-server רץ כ-Firebase Function,
+// הקידומת FIREBASE_ שמורה למערכת ולא ניתן להעביר אותה כ-env var מותאם אישית מ-.env.
+// אם אין Credentials מפורשים (למשל בסביבת Cloud Functions/Cloud Run עם ADC תקין),
+// נופלים ל-Application Default Credentials האוטומטיות של הסביבה.
+const projectId = process.env.SA_PROJECT_ID || process.env.GCLOUD_PROJECT;
+const clientEmail = process.env.SA_CLIENT_EMAIL;
+const privateKey = process.env.SA_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 if (!admin.apps.length) {
   if (projectId && clientEmail && privateKey) {
     admin.initializeApp({
       credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
     });
+  } else if (projectId) {
+    // רץ על תשתית Google (Cloud Functions/Cloud Run) - ה-ADC של הסביבה יטופל אוטומטית
+    admin.initializeApp({ projectId });
   } else {
     console.warn(
-      '⚠️  Firebase Admin: לא הוגדרו FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY ב-.env. ' +
-        'השרת יעלה, אך קריאות ל-Firestore/Auth ייכשלו עד שיוגדרו.'
+      '⚠️  Firebase Admin: לא הוגדרו Credentials ב-.env. ' +
+        'השרת יעלה, אך קריאות ל-Firestore/Auth ייכשלו עד שיוגדרו (ראה server/.env.example).'
     );
-    admin.initializeApp({ projectId: projectId || 'demo-project' });
+    admin.initializeApp({ projectId: 'demo-project' });
   }
 }
 

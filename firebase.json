@@ -3,7 +3,20 @@
     "public": "client/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      { "source": "/api/**", "function": "api" },
       { "source": "**", "destination": "/index.html" }
+    ]
+  },
+  "functions": {
+    "source": "server",
+    "runtime": "nodejs22",
+    "ignore": [
+      "node_modules",
+      "*.log",
+      "tests",
+      "scripts",
+      "Dockerfile",
+      ".dockerignore"
     ]
   },
   "firestore": {
