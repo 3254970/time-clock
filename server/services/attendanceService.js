@@ -273,6 +273,34 @@ export async function markSessionMissing(sessionId) {
   });
 }
 
+/**
+ * מוחק רשומת נוכחות (session) לצמיתות - למנהל בלבד (נאכף ב-routes).
+ * לפני המחיקה נכתבת רשומת Audit עם הערכים שהיו קיימים, כדי שתמיד יהיה
+ * תיעוד שהרשומה הזו הייתה קיימת ונמחקה, על ידי מי ומתי.
+ */
+export async function deleteSession(sessionId, { changedByUid, changedByRole }) {
+  const existing = await getSessionRaw(sessionId);
+
+  await changesCollection.add({
+    attendanceSessionId: sessionId,
+    employeeId: existing.employeeId,
+    changedByUid,
+    changedByRole,
+    changedAt: FieldValue.serverTimestamp(),
+    oldValues: {
+      clockIn: existing.clockIn,
+      clockOut: existing.clockOut,
+      departmentId: existing.departmentId,
+      status: existing.status,
+    },
+    newValues: null,
+    source: 'ADMIN',
+    action: 'DELETE',
+  });
+
+  await sessionsCollection.doc(sessionId).delete();
+}
+
 export async function listAllOpenSessions() {
   const snapshot = await sessionsCollection.where('status', '==', 'OPEN').get();
   return snapshot.docs.map((doc) => ({ id: doc.id, ...sessionToDTO(doc) }));

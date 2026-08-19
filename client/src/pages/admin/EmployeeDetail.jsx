@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../services/api.js';
+import { useToast } from '../../hooks/useToast.js';
 import LoadingState from '../../components/LoadingState.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
@@ -14,6 +15,7 @@ const currentPeriod = getCurrentPeriodParts();
 
 export default function EmployeeDetail() {
   const { id } = useParams();
+  const { showToast } = useToast();
   const [year, setYear] = useState(currentPeriod.year);
   const [month, setMonth] = useState(currentPeriod.month);
   const [data, setData] = useState(null);
@@ -21,6 +23,8 @@ export default function EmployeeDetail() {
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingEmployee, setEditingEmployee] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,6 +55,21 @@ export default function EmployeeDetail() {
     }
     setMonth(newMonth);
     setYear(newYear);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.del(`/admin/attendance/${deleteTarget.id}`);
+      showToast('הדיווח נמחק', 'success');
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) return <LoadingState />;
@@ -130,6 +149,7 @@ export default function EmployeeDetail() {
               <th>שעות</th>
               <th>סטטוס</th>
               <th>מקור</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -144,6 +164,17 @@ export default function EmployeeDetail() {
                   <StatusBadge status={row.status} />
                 </td>
                 <td>{row.clockInSource || '—'}</td>
+                <td>
+                  <button
+                    className="btn btn-danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(row);
+                    }}
+                  >
+                    מחיקה
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -160,6 +191,27 @@ export default function EmployeeDetail() {
             }}
             onCancel={() => setEditingId(null)}
           />
+        </Modal>
+      )}
+
+      {deleteTarget && (
+        <Modal title="מחיקת דיווח נוכחות" onClose={() => setDeleteTarget(null)}>
+          <p>
+            למחוק לצמיתות את הדיווח מתאריך <strong>{deleteTarget.dateFormatted}</strong>
+            {deleteTarget.clockInTime ? ` (כניסה ${deleteTarget.clockInTime})` : ''}?
+          </p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
+            הפעולה בלתי הפיכה. עצם המחיקה תישמר ביומן השינויים (Audit), אך תוכן הדיווח לא
+            יהיה ניתן לשחזור.
+          </p>
+          <div className="modal-actions">
+            <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'מוחק...' : 'מחיקה לצמיתות'}
+            </button>
+            <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>
+              ביטול
+            </button>
+          </div>
         </Modal>
       )}
 

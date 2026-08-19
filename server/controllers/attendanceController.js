@@ -87,6 +87,16 @@ export const updateSession = asyncHandler(async (req, res) => {
   sendSuccess(res, attendanceService.buildDisplayRow(updated, departmentsMap));
 });
 
+/** DELETE /api/admin/attendance/:id - מנהל בלבד. */
+export const adminDeleteSession = asyncHandler(async (req, res) => {
+  await attendanceService.getSessionRaw(req.params.id); // 404 אם לא קיים
+  await attendanceService.deleteSession(req.params.id, {
+    changedByUid: req.user.uid,
+    changedByRole: req.user.role,
+  });
+  sendSuccess(res, { deleted: true });
+});
+
 /** GET /api/admin/attendance?employeeId=&year=&month=&status= */
 export const adminListAttendance = asyncHandler(async (req, res) => {
   const { employeeId, year, month, status } = req.query;
