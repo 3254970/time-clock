@@ -5,13 +5,14 @@ import LoadingState from '../../components/LoadingState.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { getCurrentPeriodParts } from '../../utils/period.js';
 
-const now = new Date();
+const currentPeriod = getCurrentPeriodParts();
 
 export default function AttendanceHistory() {
   const navigate = useNavigate();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(currentPeriod.year);
+  const [month, setMonth] = useState(currentPeriod.month);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

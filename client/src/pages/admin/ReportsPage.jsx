@@ -4,8 +4,9 @@ import { auth } from '../../services/firebase.js';
 import LoadingState from '../../components/LoadingState.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
+import { getCurrentPeriodParts } from '../../utils/period.js';
 
-const now = new Date();
+const currentPeriod = getCurrentPeriodParts();
 
 async function downloadExport(query) {
   const token = auth.currentUser && (await auth.currentUser.getIdToken());
@@ -30,8 +31,8 @@ async function downloadExport(query) {
 }
 
 export default function ReportsPage() {
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(currentPeriod.year);
+  const [month, setMonth] = useState(currentPeriod.month);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [report, setReport] = useState(null);
