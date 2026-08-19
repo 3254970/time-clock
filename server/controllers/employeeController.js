@@ -27,3 +27,9 @@ export const updateEmployee = asyncHandler(async (req, res) => {
   const employee = await employeeService.updateEmployee(req.params.id, req.body);
   sendSuccess(res, employee);
 });
+
+/** DELETE /api/admin/employees/:id - מותר רק לעובד ללא היסטוריית נוכחות. */
+export const deleteEmployee = asyncHandler(async (req, res) => {
+  await employeeService.deleteEmployee(req.params.id);
+  sendSuccess(res, { deleted: true });
+});

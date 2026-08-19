@@ -18,6 +18,8 @@ export default function EmployeesList() {
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [resetLink, setResetLink] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,6 +47,21 @@ export default function EmployeesList() {
       load();
     } catch (err) {
       showToast(err.message, 'error');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.del(`/admin/employees/${deleteTarget.id}`);
+      showToast('העובד נמחק', 'success');
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -102,9 +119,18 @@ export default function EmployeesList() {
                 <td>
                   <StatusBadge status={emp.currentStatus} />
                 </td>
-                <td>
+                <td style={{ display: 'flex', gap: 8 }}>
                   <button className="btn btn-secondary" onClick={(e) => toggleStatus(emp, e)}>
                     {emp.status === 'ACTIVE' ? 'השבתה' : 'הפעלה'}
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(emp);
+                    }}
+                  >
+                    מחיקה
                   </button>
                 </td>
               </tr>
@@ -123,6 +149,26 @@ export default function EmployeesList() {
             load();
           }}
         />
+      )}
+
+      {deleteTarget && (
+        <Modal title="מחיקת עובד" onClose={() => setDeleteTarget(null)}>
+          <p>
+            למחוק את <strong>{deleteTarget.fullName}</strong> לצמיתות? הפעולה בלתי הפיכה.
+          </p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
+            אם לעובד יש כבר דיווחי נוכחות, המחיקה תיחסם - יש להשבית אותו במקום כדי לשמור על
+            ההיסטוריה.
+          </p>
+          <div className="modal-actions">
+            <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'מוחק...' : 'מחיקה לצמיתות'}
+            </button>
+            <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>
+              ביטול
+            </button>
+          </div>
+        </Modal>
       )}
 
       {resetLink && (

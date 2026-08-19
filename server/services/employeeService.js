@@ -157,3 +157,28 @@ export async function updateEmployee(employeeId, updates) {
   await employeesCollection.doc(employeeId).update(patch);
   return getEmployeeById(employeeId);
 }
+
+/**
+ * מוחק עובד לצמיתות. מותר רק אם אין לו שום דיווח נוכחות בהיסטוריה -
+ * אם יש, יש להשבית אותו (status = INACTIVE) במקום, כדי לא לפגוע בהיסטוריה
+ * ובדוחות. מוחק גם את משתמש ה-Authentication ורשומת ה-users/{uid} שלו.
+ */
+export async function deleteEmployee(employeeId) {
+  const employee = await getEmployeeById(employeeId);
+
+  // ייבוא מאוחר כדי למנוע תלות מעגלית בין השירותים
+  const { hasAnySessions } = await import('./attendanceService.js');
+  if (await hasAnySessions(employeeId)) {
+    throw new AppError(
+      'לא ניתן למחוק עובד עם דיווחי נוכחות קיימים - יש להשבית אותו במקום',
+      409
+    );
+  }
+
+  if (employee.firebaseUid) {
+    await authAdmin.deleteUser(employee.firebaseUid).catch(() => {});
+    await db.collection('users').doc(employee.firebaseUid).delete().catch(() => {});
+  }
+
+  await employeesCollection.doc(employeeId).delete();
+}

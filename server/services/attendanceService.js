@@ -277,3 +277,9 @@ export async function listAllOpenSessions() {
   const snapshot = await sessionsCollection.where('status', '==', 'OPEN').get();
   return snapshot.docs.map((doc) => ({ id: doc.id, ...sessionToDTO(doc) }));
 }
+
+/** בודק אם לעובד יש בכלל דיווחי נוכחות - משמש למניעת מחיקת עובד עם היסטוריה. */
+export async function hasAnySessions(employeeId) {
+  const snapshot = await sessionsCollection.where('employeeId', '==', employeeId).limit(1).get();
+  return !snapshot.empty;
+}
