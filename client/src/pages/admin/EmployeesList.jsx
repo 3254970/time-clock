@@ -156,9 +156,10 @@ export default function EmployeesList() {
           <p>
             למחוק את <strong>{deleteTarget.fullName}</strong> לצמיתות? הפעולה בלתי הפיכה.
           </p>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
-            אם לעובד יש כבר דיווחי נוכחות, המחיקה תיחסם - יש להשבית אותו במקום כדי לשמור על
-            ההיסטוריה.
+          <p style={{ color: 'var(--color-danger)', fontSize: 13, fontWeight: 600 }}>
+            אזהרה: אם לעובד יש דיווחי נוכחות, כל הדיווחים, האירועים וההיסטוריה שלו יימחקו
+            לצמיתות יחד איתו - כולל דוחות עבר. אם ברצונך לשמור על ההיסטוריה, השבת את העובד
+            במקום למחוק אותו.
           </p>
           <div className="modal-actions">
             <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>

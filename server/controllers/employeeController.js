@@ -28,8 +28,8 @@ export const updateEmployee = asyncHandler(async (req, res) => {
   sendSuccess(res, employee);
 });
 
-/** DELETE /api/admin/employees/:id - מותר רק לעובד ללא היסטוריית נוכחות. */
+/** DELETE /api/admin/employees/:id - מוחק גם את כל היסטוריית הנוכחות של העובד. */
 export const deleteEmployee = asyncHandler(async (req, res) => {
-  await employeeService.deleteEmployee(req.params.id);
-  sendSuccess(res, { deleted: true });
+  const deletedCounts = await employeeService.deleteEmployee(req.params.id);
+  sendSuccess(res, { deleted: true, ...deletedCounts });
 });

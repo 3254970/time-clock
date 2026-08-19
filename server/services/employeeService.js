@@ -159,21 +159,16 @@ export async function updateEmployee(employeeId, updates) {
 }
 
 /**
- * מוחק עובד לצמיתות. מותר רק אם אין לו שום דיווח נוכחות בהיסטוריה -
- * אם יש, יש להשבית אותו (status = INACTIVE) במקום, כדי לא לפגוע בהיסטוריה
- * ובדוחות. מוחק גם את משתמש ה-Authentication ורשומת ה-users/{uid} שלו.
+ * מוחק עובד לצמיתות, כולל כל היסטוריית הנוכחות שלו (attendanceSessions,
+ * attendanceEvents, attendanceChanges) ומשתמש ה-Authentication שלו.
+ * פעולה בלתי הפיכה - האדמין מקבל אזהרה מפורשת על כך בצד הלקוח לפני האישור.
  */
 export async function deleteEmployee(employeeId) {
   const employee = await getEmployeeById(employeeId);
 
   // ייבוא מאוחר כדי למנוע תלות מעגלית בין השירותים
-  const { hasAnySessions } = await import('./attendanceService.js');
-  if (await hasAnySessions(employeeId)) {
-    throw new AppError(
-      'לא ניתן למחוק עובד עם דיווחי נוכחות קיימים - יש להשבית אותו במקום',
-      409
-    );
-  }
+  const { deleteAllDataForEmployee } = await import('./attendanceService.js');
+  const deletedCounts = await deleteAllDataForEmployee(employeeId);
 
   if (employee.firebaseUid) {
     await authAdmin.deleteUser(employee.firebaseUid).catch(() => {});
@@ -181,4 +176,5 @@ export async function deleteEmployee(employeeId) {
   }
 
   await employeesCollection.doc(employeeId).delete();
+  return deletedCounts;
 }

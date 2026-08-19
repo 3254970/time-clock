@@ -278,8 +278,34 @@ export async function listAllOpenSessions() {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...sessionToDTO(doc) }));
 }
 
-/** בודק אם לעובד יש בכלל דיווחי נוכחות - משמש למניעת מחיקת עובד עם היסטוריה. */
+/** בודק אם לעובד יש בכלל דיווחי נוכחות. */
 export async function hasAnySessions(employeeId) {
   const snapshot = await sessionsCollection.where('employeeId', '==', employeeId).limit(1).get();
   return !snapshot.empty;
+}
+
+async function deleteQueryInBatches(query) {
+  const snapshot = await query.get();
+  const docs = snapshot.docs;
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    docs.slice(i, i + BATCH_SIZE).forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+  return docs.length;
+}
+
+/**
+ * מוחק לצמיתות את כל נתוני הנוכחות של עובד: attendanceSessions, attendanceEvents,
+ * attendanceChanges. משמש כשמוחקים עובד עם היסטוריה - האדמין מקבל אזהרה מפורשת
+ * לפני כן בצד הלקוח.
+ */
+export async function deleteAllDataForEmployee(employeeId) {
+  const [sessionsDeleted, eventsDeleted, changesDeleted] = await Promise.all([
+    deleteQueryInBatches(sessionsCollection.where('employeeId', '==', employeeId)),
+    deleteQueryInBatches(eventsCollection.where('employeeId', '==', employeeId)),
+    deleteQueryInBatches(changesCollection.where('employeeId', '==', employeeId)),
+  ]);
+  return { sessionsDeleted, eventsDeleted, changesDeleted };
 }
