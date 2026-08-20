@@ -87,9 +87,12 @@ export const updateSession = asyncHandler(async (req, res) => {
   sendSuccess(res, attendanceService.buildDisplayRow(updated, departmentsMap));
 });
 
-/** DELETE /api/admin/attendance/:id - מנהל בלבד. */
-export const adminDeleteSession = asyncHandler(async (req, res) => {
-  await attendanceService.getSessionRaw(req.params.id); // 404 אם לא קיים
+/**
+ * DELETE /api/attendance/:id וגם DELETE /api/admin/attendance/:id - אותה פונקציה.
+ * עובד יכול למחוק רק דיווח שלו, מנהל יכול למחוק כל דיווח (assertCanAccessSession).
+ */
+export const deleteSession = asyncHandler(async (req, res) => {
+  await assertCanAccessSession(req, req.params.id);
   await attendanceService.deleteSession(req.params.id, {
     changedByUid: req.user.uid,
     changedByRole: req.user.role,
@@ -97,12 +100,18 @@ export const adminDeleteSession = asyncHandler(async (req, res) => {
   sendSuccess(res, { deleted: true });
 });
 
-/** POST /api/admin/attendance - הוספת דיווח ידני. מנהל בלבד. */
-export const adminCreateSession = asyncHandler(async (req, res) => {
-  const { employeeId, clockIn, clockOut, departmentId } = req.body;
+/**
+ * POST /api/attendance וגם POST /api/admin/attendance - הוספת דיווח ידני.
+ * עובד יוצר לעצמו בלבד (employeeId נלקח מהמשתמש המחובר), מנהל יכול לבחור עובד.
+ */
+export const createSession = asyncHandler(async (req, res) => {
+  const isAdmin = ['ADMIN', 'MANAGER'].includes(req.user.role);
+  const employeeId = isAdmin ? req.body.employeeId : requireEmployeeContext(req);
   if (!employeeId) {
     throw new AppError('חובה לבחור עובד', 400);
   }
+
+  const { clockIn, clockOut, departmentId } = req.body;
   const session = await attendanceService.createManualSession({
     employeeId,
     clockIn,

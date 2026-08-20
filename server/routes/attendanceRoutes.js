@@ -8,6 +8,8 @@ import {
   getMyPeriod,
   getSession,
   updateSession,
+  createSession,
+  deleteSession,
 } from '../controllers/attendanceController.js';
 
 const router = Router();
@@ -19,8 +21,12 @@ router.post('/clock-in', requireRole('EMPLOYEE'), clockIn);
 router.post('/clock-out', requireRole('EMPLOYEE'), clockOut);
 router.get('/my-period', requireRole('EMPLOYEE'), getMyPeriod);
 
-// רשומה בודדת: עובד יכול לגשת רק לרשומה שלו, מנהל לכל רשומה (נבדק בתוך ה-controller).
+// הוספת דיווח ידני - עובד יוצר לעצמו בלבד (employeeId נלקח מהטוקן).
+router.post('/', requireRole('EMPLOYEE'), createSession);
+
+// רשומה בודדת: עובד יכול לגשת/לערוך/למחוק רק רשומה שלו, מנהל לכל רשומה (נבדק בתוך ה-controller).
 router.get('/:id', requireRole(['EMPLOYEE', 'ADMIN', 'MANAGER']), getSession);
 router.put('/:id', requireRole(['EMPLOYEE', 'ADMIN', 'MANAGER']), updateSession);
+router.delete('/:id', requireRole(['EMPLOYEE', 'ADMIN', 'MANAGER']), deleteSession);
 
 export default router;

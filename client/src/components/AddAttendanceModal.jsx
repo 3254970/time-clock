@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import Modal from '../../components/Modal.jsx';
-import ErrorState from '../../components/ErrorState.jsx';
-import { api } from '../../services/api.js';
+import Modal from './Modal.jsx';
+import ErrorState from './ErrorState.jsx';
+import { api } from '../services/api.js';
 
-// הוספת דיווח נוכחות ידני לעובד (למשל יום ששכח לדווח) - כולל בחירת תאריך.
+// הוספת דיווח נוכחות ידני - כולל בחירת תאריך.
+// אם הועבר employeeId (שימוש מנהל) הדיווח נוצר לעובד שנבחר; אחרת (שימוש עובד)
+// הדיווח נוצר לעובד המחובר, לפי הטוקן, בצד השרת.
 export default function AddAttendanceModal({ employeeId, onClose, onCreated }) {
   const [departments, setDepartments] = useState([]);
   const [clockIn, setClockIn] = useState('');
@@ -27,12 +29,14 @@ export default function AddAttendanceModal({ employeeId, onClose, onCreated }) {
     setSaving(true);
     setError('');
     try {
-      const created = await api.post('/admin/attendance', {
-        employeeId,
+      const payload = {
         clockIn: clockIn ? new Date(clockIn).toISOString() : null,
         clockOut: clockOut ? new Date(clockOut).toISOString() : null,
         departmentId: departmentId || null,
-      });
+      };
+      const created = employeeId
+        ? await api.post('/admin/attendance', { ...payload, employeeId })
+        : await api.post('/attendance', payload);
       onCreated(created);
     } catch (err) {
       setError(err.message);

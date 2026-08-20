@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import {
   adminListAttendance,
-  adminCreateSession,
+  createSession,
   updateSession,
-  adminDeleteSession,
+  deleteSession,
 } from '../controllers/attendanceController.js';
 
 const router = Router();
 
 router.get('/', adminListAttendance);
-router.post('/', adminCreateSession);
+router.post('/', createSession);
 router.put('/:id', updateSession);
-router.delete('/:id', adminDeleteSession);
+router.delete('/:id', deleteSession);
 
 export default router;

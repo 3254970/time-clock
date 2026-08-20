@@ -9,7 +9,7 @@ import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
 import AttendanceEditForm from '../../components/AttendanceEditForm.jsx';
 import EmployeeEditModal from './EmployeeEditModal.jsx';
-import AddAttendanceModal from './AddAttendanceModal.jsx';
+import AddAttendanceModal from '../../components/AddAttendanceModal.jsx';
 import { getCurrentPeriodParts } from '../../utils/period.js';
 
 const currentPeriod = getCurrentPeriodParts();

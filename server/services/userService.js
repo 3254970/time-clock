@@ -1,4 +1,4 @@
-import { db } from '../firebase/firebaseAdmin.js';
+import { db, authAdmin } from '../firebase/firebaseAdmin.js';
 
 const usersCollection = db.collection('users');
 
@@ -20,4 +20,19 @@ export async function setUserRole(uid, { role, employeeId = null, email = null }
     },
     { merge: true }
   );
+}
+
+/**
+ * מעדכן אימייל ו/או סיסמה של משתמש ב-Firebase Authentication.
+ * updates: { email?, password? } - שדות ריקים לא נשלחים ל-Firebase.
+ * מחזיר את רשומת המשתמש המעודכנת מ-Auth.
+ */
+export async function updateAuthCredentials(uid, { email, password } = {}) {
+  const updates = {};
+  if (email) updates.email = email;
+  if (password) updates.password = password;
+  if (Object.keys(updates).length === 0) {
+    return authAdmin.getUser(uid);
+  }
+  return authAdmin.updateUser(uid, updates);
 }

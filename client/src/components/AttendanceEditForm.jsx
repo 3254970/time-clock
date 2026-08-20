@@ -12,7 +12,7 @@ function toInputValue(isoString) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function AttendanceEditForm({ sessionId, onSaved, onCancel }) {
+export default function AttendanceEditForm({ sessionId, onSaved, onCancel, onDeleted }) {
   const { showToast } = useToast();
   const [session, setSession] = useState(null);
   const [departments, setDepartments] = useState([]);
@@ -22,6 +22,8 @@ export default function AttendanceEditForm({ sessionId, onSaved, onCancel }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +68,19 @@ export default function AttendanceEditForm({ sessionId, onSaved, onCancel }) {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      await api.del(`/attendance/${sessionId}`);
+      showToast('הדיווח נמחק', 'success');
+      onDeleted?.();
+    } catch (err) {
+      setError(err.message);
+      setDeleting(false);
     }
   };
 
@@ -124,6 +139,30 @@ export default function AttendanceEditForm({ sessionId, onSaved, onCancel }) {
           ביטול
         </button>
       </div>
+
+      {onDeleted && (
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--color-border, #e5e7eb)' }}>
+          {!confirmingDelete ? (
+            <button type="button" className="btn btn-danger" onClick={() => setConfirmingDelete(true)}>
+              מחיקת דיווח
+            </button>
+          ) : (
+            <div>
+              <p style={{ fontSize: 13 }}>
+                למחוק לצמיתות את הדיווח? הפעולה בלתי הפיכה (אך תישמר ביומן השינויים).
+              </p>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? 'מוחק...' : 'אישור מחיקה'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setConfirmingDelete(false)}>
+                  ביטול
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </form>
   );
 }

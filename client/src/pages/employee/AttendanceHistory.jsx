@@ -1,21 +1,25 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api.js';
+import { useToast } from '../../hooks/useToast.js';
 import LoadingState from '../../components/LoadingState.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import AddAttendanceModal from '../../components/AddAttendanceModal.jsx';
 import { getCurrentPeriodParts } from '../../utils/period.js';
 
 const currentPeriod = getCurrentPeriodParts();
 
 export default function AttendanceHistory() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [year, setYear] = useState(currentPeriod.year);
   const [month, setMonth] = useState(currentPeriod.month);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAddAttendance, setShowAddAttendance] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,6 +68,9 @@ export default function AttendanceHistory() {
         {data && (
           <strong>סה"כ בתקופה: {data.totalFormatted}</strong>
         )}
+        <button className="btn" onClick={() => setShowAddAttendance(true)}>
+          + הוספת דיווח ידני
+        </button>
       </div>
 
       <ErrorState message={error} />
@@ -99,6 +106,17 @@ export default function AttendanceHistory() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {showAddAttendance && (
+        <AddAttendanceModal
+          onClose={() => setShowAddAttendance(false)}
+          onCreated={() => {
+            setShowAddAttendance(false);
+            showToast('הדיווח נוסף בהצלחה', 'success');
+            load();
+          }}
+        />
       )}
     </div>
   );

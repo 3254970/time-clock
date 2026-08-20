@@ -9,7 +9,7 @@ export default function AttendanceEdit() {
   return (
     <div>
       <h1 className="page-title">עריכת דיווח נוכחות</h1>
-      <AttendanceEditForm sessionId={id} onSaved={back} onCancel={back} />
+      <AttendanceEditForm sessionId={id} onSaved={back} onCancel={back} onDeleted={back} />
     </div>
   );
 }
