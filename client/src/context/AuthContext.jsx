@@ -17,8 +17,11 @@ export function AuthProvider({ children }) {
       const data = await api.get('/auth/me');
       setProfile(data);
     } catch (err) {
+      // טוקן שפג תוקפו / משתמש שאינו רשום יותר - מתנתקים כדי שהמסך יפנה
+      // ללוגין במקום להישאר עם משתמש Firebase "רפאים" בלי פרופיל תקין.
       setProfile(null);
       setError(err.message);
+      await signOut(auth).catch(() => {});
     }
   }, []);
 

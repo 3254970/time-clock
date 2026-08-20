@@ -10,7 +10,9 @@ export default function ProtectedRoute({ roles, children }) {
     return <LoadingState text="טוען משתמש..." />;
   }
 
-  if (!firebaseUser) {
+  // אין משתמש מחובר, או שההתחברות קיימת בדפדפן אך לא נטען עבורה פרופיל תקין
+  // מהשרת (למשל טוקן שפג תוקפו / משתמש שנמחק) - מתייחסים לזה כלא-מחובר ומפנים ללוגין.
+  if (!firebaseUser || !role) {
     return <Navigate to="/login" replace />;
   }
 
