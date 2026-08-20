@@ -230,6 +230,8 @@ tbody tr[role='button'] {
 }
 
 .btn-danger {
+  color: var(--color-text);
+  background: var(--color-surface);
   border-color: var(--color-danger);
 }
 

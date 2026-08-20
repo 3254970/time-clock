@@ -301,6 +301,81 @@ export async function deleteSession(sessionId, { changedByUid, changedByRole }) 
   await sessionsCollection.doc(sessionId).delete();
 }
 
+/**
+ * יוצר רשומת נוכחות ידנית (למשל עובד ששכח לדווח יום שלם) - למנהל בלבד.
+ * לא עובר דרך clockIn/clockOut (אין "כניסה פתוחה" אמיתית) - נוצר ישירות
+ * עם השעות שהוזנו. נוצר Event וגם רשומת Audit, בדיוק כמו בכל פעולה אחרת.
+ */
+export async function createManualSession({ employeeId, clockIn, clockOut, departmentId, createdBy, changedByRole }) {
+  const clockInDate = toJSDate(clockIn);
+  const clockOutDate = clockOut ? toJSDate(clockOut) : null;
+
+  if (!clockInDate) {
+    throw new AppError('שעת כניסה היא שדה חובה', 400);
+  }
+  if (clockOutDate && clockOutDate < clockInDate) {
+    throw new AppError('שעת יציאה לא יכולה להיות לפני שעת הכניסה', 400);
+  }
+  if (departmentId) {
+    await getDepartmentById(departmentId);
+  }
+
+  const status = clockOutDate ? 'COMPLETE' : 'OPEN';
+
+  const docRef = await sessionsCollection.add({
+    employeeId,
+    clockIn: clockInDate,
+    clockOut: clockOutDate,
+    departmentId: departmentId || null,
+    status,
+    clockInSource: 'ADMIN',
+    clockOutSource: clockOutDate ? 'ADMIN' : null,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await logEvent({
+    employeeId,
+    sessionId: docRef.id,
+    type: 'CLOCK_IN',
+    timestamp: clockInDate,
+    source: 'ADMIN',
+    createdBy,
+    metadata: { manual: true },
+  });
+  if (clockOutDate) {
+    await logEvent({
+      employeeId,
+      sessionId: docRef.id,
+      type: 'CLOCK_OUT',
+      timestamp: clockOutDate,
+      source: 'ADMIN',
+      createdBy,
+      metadata: { manual: true, departmentId },
+    });
+  }
+
+  await changesCollection.add({
+    attendanceSessionId: docRef.id,
+    employeeId,
+    changedByUid: createdBy,
+    changedByRole,
+    changedAt: FieldValue.serverTimestamp(),
+    oldValues: null,
+    newValues: {
+      clockIn: clockInDate.toISOString(),
+      clockOut: clockOutDate ? clockOutDate.toISOString() : null,
+      departmentId: departmentId || null,
+      status,
+    },
+    source: 'ADMIN',
+    action: 'CREATE',
+  });
+
+  const doc = await docRef.get();
+  return sessionToDTO(doc);
+}
+
 export async function listAllOpenSessions() {
   const snapshot = await sessionsCollection.where('status', '==', 'OPEN').get();
   return snapshot.docs.map((doc) => ({ id: doc.id, ...sessionToDTO(doc) }));

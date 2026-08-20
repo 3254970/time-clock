@@ -97,6 +97,24 @@ export const adminDeleteSession = asyncHandler(async (req, res) => {
   sendSuccess(res, { deleted: true });
 });
 
+/** POST /api/admin/attendance - הוספת דיווח ידני. מנהל בלבד. */
+export const adminCreateSession = asyncHandler(async (req, res) => {
+  const { employeeId, clockIn, clockOut, departmentId } = req.body;
+  if (!employeeId) {
+    throw new AppError('חובה לבחור עובד', 400);
+  }
+  const session = await attendanceService.createManualSession({
+    employeeId,
+    clockIn,
+    clockOut,
+    departmentId,
+    createdBy: req.user.uid,
+    changedByRole: req.user.role,
+  });
+  const departmentsMap = await attendanceService.getDepartmentsMap();
+  sendSuccess(res, attendanceService.buildDisplayRow(session, departmentsMap), 201);
+});
+
 /** GET /api/admin/attendance?employeeId=&year=&month=&status= */
 export const adminListAttendance = asyncHandler(async (req, res) => {
   const { employeeId, year, month, status } = req.query;

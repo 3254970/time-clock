@@ -9,6 +9,7 @@ import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
 import AttendanceEditForm from '../../components/AttendanceEditForm.jsx';
 import EmployeeEditModal from './EmployeeEditModal.jsx';
+import AddAttendanceModal from './AddAttendanceModal.jsx';
 import { getCurrentPeriodParts } from '../../utils/period.js';
 
 const currentPeriod = getCurrentPeriodParts();
@@ -25,6 +26,7 @@ export default function EmployeeDetail() {
   const [editingEmployee, setEditingEmployee] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [showAddAttendance, setShowAddAttendance] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -134,6 +136,10 @@ export default function EmployeeDetail() {
         <button className="btn btn-secondary" onClick={() => changeMonth(1)}>
           חודש הבא &rarr;
         </button>
+        <div className="spacer" />
+        <button className="btn" onClick={() => setShowAddAttendance(true)}>
+          + הוספת דיווח ידני
+        </button>
       </div>
 
       {rows.length === 0 ? (
@@ -213,6 +219,18 @@ export default function EmployeeDetail() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {showAddAttendance && (
+        <AddAttendanceModal
+          employeeId={id}
+          onClose={() => setShowAddAttendance(false)}
+          onCreated={() => {
+            setShowAddAttendance(false);
+            showToast('הדיווח נוסף בהצלחה', 'success');
+            load();
+          }}
+        />
       )}
 
       {editingEmployee && (
