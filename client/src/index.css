@@ -392,90 +392,15 @@ tbody tr[role='button'] {
 .login-page {
   min-height: 100vh;
   display: flex;
-  background: var(--color-bg);
-}
-
-.login-hero {
-  flex: 1.1;
-  position: relative;
+  align-items: center;
+  justify-content: flex-start;
   background-size: cover;
   background-position: center;
-  display: flex;
-  align-items: flex-end;
-}
-
-.login-hero-overlay {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: flex-end;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.35) 55%, rgba(15, 23, 42, 0.75) 100%);
-  padding: 48px;
-}
-
-.login-hero-content {
-  color: white;
-  max-width: 460px;
-}
-
-.login-hero-badge {
-  display: inline-block;
-  padding: 5px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(4px);
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.login-hero-content h2 {
-  font-size: 30px;
-  line-height: 1.3;
-  margin: 0 0 12px;
-}
-
-.login-hero-content p {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 22px;
-}
-
-.login-hero-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.login-hero-features li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.login-hero-features li svg {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  padding: 4px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  color: white;
+  padding: 24px 150px 24px 64px;
 }
 
 .login-form-panel {
-  flex: 1;
-  min-width: 380px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
 }
 
 .login-card {
@@ -484,7 +409,7 @@ tbody tr[role='button'] {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
   padding: 36px 32px;
 }
 
@@ -584,13 +509,9 @@ tbody tr[role='button'] {
   }
 }
 
-@media (max-width: 900px) {
-  .login-hero {
-    display: none;
-  }
-
-  .login-form-panel {
-    min-width: 0;
+@media (max-width: 700px) {
+  .login-page {
+    justify-content: center;
     padding: 20px;
   }
 }

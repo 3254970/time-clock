@@ -30,31 +30,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page">
-      <div
-        className="login-hero"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
-        <div className="login-hero-overlay">
-          <div className="login-hero-content">
-            <span className="login-hero-badge">מערכת נוכחות</span>
-            <h2>ניהול נוכחות חכם, פשוט ומדויק</h2>
-            <p>דיווח כניסה ויציאה, מעקב שעות ודוחות מנהלים - הכל במקום אחד.</p>
-            <ul className="login-hero-features">
-              <li>
-                <CheckIcon /> דיווח נוכחות בזמן אמת
-              </li>
-              <li>
-                <CheckIcon /> מעקב שעות עבודה חודשי
-              </li>
-              <li>
-                <CheckIcon /> ניהול עובדים ודוחות מתקדמים
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
+    <div className="login-page" style={{ backgroundImage: `url(${heroImage})` }}>
       <div className="login-form-panel">
         <div className="login-card">
           <div className="login-card-header">
@@ -184,14 +160,6 @@ function AlertIcon() {
       <circle cx="12" cy="12" r="9" />
       <path d="M12 8v5" />
       <path d="M12 16h.01" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6 9 17l-5-5" />
     </svg>
   );
 }
