@@ -65,13 +65,13 @@ export function minutesToHHMM(totalMinutes) {
 }
 
 /**
- * תקופת עבודה: מה-16 בחודש הקודם עד ה-15 בחודש הנוכחי (כולל).
- * לדוגמה getWorkPeriod(2026, 8) => 16/07/2026 - 15/08/2026.
+ * תקופת עבודה: חודש קלנדרי מלא, מה-1 בחודש עד היום האחרון בו (כולל).
+ * לדוגמה getWorkPeriod(2026, 8) => 01/08/2026 - 31/08/2026.
  * זוהי הפונקציה המרכזית היחידה לחישוב תקופת עבודה - אין לשכפל אותה.
  */
 export function getWorkPeriod(year, month) {
-  const end = DateTime.fromObject({ year, month, day: 15 }, { zone: ZONE }).endOf('day');
-  const start = end.minus({ months: 1 }).set({ day: 16 }).startOf('day');
+  const start = DateTime.fromObject({ year, month, day: 1 }, { zone: ZONE }).startOf('day');
+  const end = start.endOf('month');
 
   return {
     year,
@@ -86,19 +86,10 @@ export function getWorkPeriod(year, month) {
   };
 }
 
-/** מחזיר את תקופת העבודה שבתוכה נמצא תאריך נתון. */
+/** מחזיר את תקופת העבודה (החודש הקלנדרי) שבתוכה נמצא תאריך נתון. */
 export function getWorkPeriodForDate(value) {
   const zoned = toZonedDateTime(value) || nowInZone();
-  let year = zoned.year;
-  let month = zoned.month;
-  if (zoned.day > 15) {
-    month += 1;
-    if (month > 12) {
-      month = 1;
-      year += 1;
-    }
-  }
-  return getWorkPeriod(year, month);
+  return getWorkPeriod(zoned.year, zoned.month);
 }
 
 export function getCurrentWorkPeriod() {

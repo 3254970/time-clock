@@ -2,16 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getWorkPeriod, minutesToHHMM, diffMinutes } from '../utils/timeUtils.js';
 
-test('getWorkPeriod: אוגוסט 2026 הוא 16/07 - 15/08', () => {
+test('getWorkPeriod: אוגוסט 2026 הוא 01/08 - 31/08', () => {
   const period = getWorkPeriod(2026, 8);
-  assert.equal(period.startFormatted, '16/07/2026');
-  assert.equal(period.endFormatted, '15/08/2026');
+  assert.equal(period.startFormatted, '01/08/2026');
+  assert.equal(period.endFormatted, '31/08/2026');
 });
 
-test('getWorkPeriod: ינואר עובר לשנה קודמת בחישוב תחילת התקופה', () => {
-  const period = getWorkPeriod(2026, 1);
-  assert.equal(period.startFormatted, '16/12/2025');
-  assert.equal(period.endFormatted, '15/01/2026');
+test('getWorkPeriod: פברואר 2026 מסתיים ב-28 (שנה לא מעוברת)', () => {
+  const period = getWorkPeriod(2026, 2);
+  assert.equal(period.startFormatted, '01/02/2026');
+  assert.equal(period.endFormatted, '28/02/2026');
 });
 
 test('minutesToHHMM: 510 דקות => 08:30', () => {

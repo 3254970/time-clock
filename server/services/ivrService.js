@@ -20,7 +20,7 @@ export async function getActiveDepartmentsForMenu() {
   return listDepartments({ activeOnly: true });
 }
 
-/** סה"כ דקות עבודה של עובד בתקופה הנוכחית (16-15), לשמיעה בטלפון. */
+/** סה"כ דקות עבודה של עובד בחודש הקלנדרי הנוכחי, לשמיעה בטלפון. */
 export async function getCurrentPeriodTotalFormatted(employeeId) {
   const period = getCurrentWorkPeriod();
   const sessions = await attendanceService.listSessionsForEmployee(employeeId, {
