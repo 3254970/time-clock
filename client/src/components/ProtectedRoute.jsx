@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { getHomePathForRole } from '../utils/roles.js';
 import LoadingState from './LoadingState.jsx';
 
 // עוטף נתיבים שדורשים התחברות, ובאופן אופציונלי הרשאת role מסוימת.
@@ -16,12 +17,9 @@ export default function ProtectedRoute({ roles, children }) {
     return <Navigate to="/login" replace />;
   }
 
+  // מחובר, אבל עם role שלא מתאים לדף הזה - מפנים לדף הבית שלו במקום להציג שגיאה.
   if (roles && !roles.includes(role)) {
-    return (
-      <div className="empty-state">
-        אין לך הרשאה לצפות בעמוד זה.
-      </div>
-    );
+    return <Navigate to={getHomePathForRole(role)} replace />;
   }
 
   return children;

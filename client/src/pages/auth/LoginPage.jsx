@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
+import { getHomePathForRole } from '../../utils/roles.js';
 import heroImage from '../../img/background.png';
 
 export default function LoginPage() {
@@ -12,8 +13,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && firebaseUser && role) {
-    const target = role === 'EMPLOYEE' ? '/employee' : '/admin';
-    return <Navigate to={target} replace />;
+    return <Navigate to={getHomePathForRole(role)} replace />;
   }
 
   const handleSubmit = async (e) => {
