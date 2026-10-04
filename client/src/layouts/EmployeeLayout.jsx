@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import ProfileModal from '../components/ProfileModal.jsx';
+import UserBadge from '../components/UserBadge.jsx';
 
 export default function EmployeeLayout() {
   const { logout, profile } = useAuth();
@@ -18,24 +19,7 @@ export default function EmployeeLayout() {
         <button className="link" onClick={logout}>
           התנתקות
         </button>
-        {profile?.fullName && (
-          <button
-            type="button"
-            onClick={() => setShowProfile(true)}
-            style={{
-              marginTop: 'auto',
-              padding: '10px 8px',
-              fontSize: 13,
-              color: '#6b7280',
-              background: 'none',
-              border: 'none',
-              textAlign: 'inherit',
-              cursor: 'pointer',
-            }}
-          >
-            מחובר/ת: {profile.fullName}
-          </button>
-        )}
+        {profile?.fullName && <UserBadge onClick={() => setShowProfile(true)} />}
       </aside>
       <main className="main-content">
         <Outlet />

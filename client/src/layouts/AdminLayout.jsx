@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import UserBadge from '../components/UserBadge.jsx';
 
 export default function AdminLayout() {
   const { logout, profile } = useAuth();
@@ -17,11 +18,7 @@ export default function AdminLayout() {
         <button className="link" onClick={logout}>
           התנתקות
         </button>
-        {profile?.email && (
-          <div style={{ marginTop: 'auto', padding: '10px 8px', fontSize: 13, color: '#6b7280' }}>
-            מחובר/ת: {profile.email}
-          </div>
-        )}
+        {profile && <UserBadge />}
       </aside>
       <main className="main-content">
         <Outlet />
