@@ -51,38 +51,43 @@ export default function ProfileModal({ onClose }) {
       <form onSubmit={handleSubmit}>
         <ErrorState message={error} />
 
-        <div className="form-group">
-          <label htmlFor="profileFirstName">שם פרטי</label>
-          <input
-            id="profileFirstName"
-            type="text"
-            className="form-control"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="profileLastName">שם משפחה</label>
-          <input
-            id="profileLastName"
-            type="text"
-            className="form-control"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="profilePhone">טלפון</label>
-          <input
-            id="profilePhone"
-            type="tel"
-            className="form-control"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
+        {/* שם וטלפון שמורים ברשומת העובד - למנהל בלי רשומת עובד אין מה לערוך */}
+        {profile?.employeeId && (
+          <>
+            <div className="form-group">
+              <label htmlFor="profileFirstName">שם פרטי</label>
+              <input
+                id="profileFirstName"
+                type="text"
+                className="form-control"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+    
+            <div className="form-group">
+              <label htmlFor="profileLastName">שם משפחה</label>
+              <input
+                id="profileLastName"
+                type="text"
+                className="form-control"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
+    
+            <div className="form-group">
+              <label htmlFor="profilePhone">טלפון</label>
+              <input
+                id="profilePhone"
+                type="tel"
+                className="form-control"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+          </>
+        )}
 
         <div className="form-group">
           <label htmlFor="profileEmail">אימייל</label>

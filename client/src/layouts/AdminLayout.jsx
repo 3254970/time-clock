@@ -1,10 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.js';
-import UserBadge from '../components/UserBadge.jsx';
+import SidebarUserMenu from '../components/SidebarUserMenu.jsx';
 
 export default function AdminLayout() {
-  const { logout, profile } = useAuth();
-
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -15,10 +12,7 @@ export default function AdminLayout() {
         <NavLink to="/admin/employees">עובדים</NavLink>
         <NavLink to="/admin/departments">מחלקות</NavLink>
         <NavLink to="/admin/reports">דוחות</NavLink>
-        <button className="link" onClick={logout}>
-          התנתקות
-        </button>
-        {profile && <UserBadge />}
+        <SidebarUserMenu />
       </aside>
       <main className="main-content">
         <Outlet />
