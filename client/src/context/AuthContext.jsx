@@ -1,5 +1,12 @@
 import { createContext, useEffect, useState, useCallback } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  getAdditionalUserInfo,
+  signOut,
+} from 'firebase/auth';
 import { auth } from '../services/firebase.js';
 import { api } from '../services/api.js';
 
@@ -43,6 +50,21 @@ export function AuthProvider({ children }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
+  const loginWithGoogle = async () => {
+    setError(null);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(auth, provider);
+    // משתמשים נוצרים רק ע"י מנהל, לכן חשבון Google שנוצר עכשיו לראשונה
+    // אינו רשום במערכת - מוחקים אותו כדי לא להשאיר משתמשי Auth יתומים.
+    if (getAdditionalUserInfo(result)?.isNewUser) {
+      await result.user.delete().catch(() => signOut(auth).catch(() => {}));
+      const err = new Error('החשבון אינו רשום במערכת');
+      err.code = 'app/not-registered';
+      throw err;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setProfile(null);
@@ -56,6 +78,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    loginWithGoogle,
     logout,
     refreshProfile: loadProfile,
   };
